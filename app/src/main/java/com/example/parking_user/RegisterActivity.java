@@ -21,7 +21,7 @@ import org.json.JSONObject;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    private EditText et_id, et_password, et_name, et_role, et_age, et_gender, et_phone_number;
+    private EditText et_id, et_password, et_passck, et_name, et_role, et_age, et_gender, et_phone_number;
     private Button btn_register, btn_exam;
     private AlertDialog dialog;
     private boolean exam = false; //중복검사 여부
@@ -34,6 +34,7 @@ public class RegisterActivity extends AppCompatActivity {
         // 아이디 값 찾아주기
         et_id = (EditText) findViewById(R.id.et_id);
         et_password = (EditText) findViewById(R.id.et_password);
+        et_passck = (EditText) findViewById(R.id.et_passck);
         et_name = (EditText) findViewById(R.id.et_name);
         et_role = (EditText) findViewById(R.id.et_role);
         et_age = (EditText) findViewById(R.id.et_age);
@@ -103,7 +104,8 @@ public class RegisterActivity extends AppCompatActivity {
             public void onClick(View view) {
                 // EditText에 현재 입력되어있는 값을 get(가져온다)해온다.
                 String id = et_id.getText().toString();
-                String password = et_password.getText().toString();
+                final String password = et_password.getText().toString();
+                final String PassCk=et_passck.getText().toString();
                 String name = et_name.getText().toString();
                 String role = et_role.getText().toString();
                 String age = et_age.getText().toString();
@@ -111,23 +113,50 @@ public class RegisterActivity extends AppCompatActivity {
                 String phone_number = et_phone_number.getText().toString();
 
 
+                //아이디 중복체크 했는지 확인
+                if (!exam) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(RegisterActivity.this);
+                    dialog = builder.setMessage("중복된 아이디가 있는지 확인하세요.").setNegativeButton("확인", null).create();
+                    dialog.show();
+                    return;
+                }
+
+                //한 칸이라도 입력 안했을 경우
+                if (id.equals("") || password.equals("") || name.equals("")) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(RegisterActivity.this);
+                    dialog = builder.setMessage("모두 입력해주세요.").setNegativeButton("확인", null).create();
+                    dialog.show();
+                    return;
+                }
+
+                //비밀번호가 동일하지 않은 경우
+                if(!password.equals(PassCk)) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(RegisterActivity.this);
+                    dialog = builder.setMessage("비밀번호가 동일하지 않습니다.").setNegativeButton("확인", null).create();
+                    dialog.show();
+                    return;
+                }
+
                 Response.Listener<String> responseListener = new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
+
                         try {
-                            JSONObject jsonObject = new JSONObject(response);
-                            boolean success = jsonObject.getBoolean("success");
-                            if (success&&exam) { // 회원등록에 성공한 경우
-                                Toast.makeText(getApplicationContext(),"회원 등록에 성공하였습니다.",Toast.LENGTH_SHORT).show();
+                            JSONObject jsonObject = new JSONObject( response );
+                            boolean success = jsonObject.getBoolean( "success" );
+
+                            if (success) {
+
+                                Toast.makeText(getApplicationContext(), String.format("%s님 가입을 환영합니다.", name), Toast.LENGTH_SHORT).show();
                                 Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
                                 startActivity(intent);
-                            }else if(exam == false){ //아이디 등록이 안된 경우(중복인 경우)
-                                Toast.makeText(getApplicationContext(),"아이디 중복 확인이 필요합니다.",Toast.LENGTH_SHORT).show();
-                                return;
-                            } else { // 회원등록에 실패한 경우
-                                Toast.makeText(getApplicationContext(),"회원 등록에 실패하였습니다.",Toast.LENGTH_SHORT).show();
+
+                            //회원가입 실패시
+                            } else {
+                                Toast.makeText(getApplicationContext(), "회원가입에 실패하였습니다.", Toast.LENGTH_SHORT).show();
                                 return;
                             }
+
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
